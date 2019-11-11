@@ -13,7 +13,10 @@ class UartDriver(object):
         self.serial = None
 
     def select_device(self):
-        return glob.glob("/dev/*usbmodem*")[0]
+        dev = glob.glob("/dev/*usbmodem*")
+        if not dev:
+            return glob.glob("/dev/*CMSIS*")[0]
+        return dev[0]
 
     def connect(self):
         device = self.select_device()
