@@ -1,13 +1,19 @@
 import logging
 import os
+from sys import platform
 
 
 class Programmer(object):
     IMAGES_DIR = 'images'
-    OPEN_OCD = '/usr/local/bin/openocd'
-    OPEN_OCD_COMMAND = '%s  -f interface/cmsis-dap.cfg -f target/stm32f0x.cfg -f ' \
-                       'openocd_scripts/stm32f0-openocd.cfg -c "stm_flash %s" -c shutdown' \
-                       '2> /dev/null' % (OPEN_OCD, '%s')
+
+    def __init__(self):
+        if platform == "linux" or platform == "linux2":
+            self.OPEN_OCD = '/usr/bin/openocd'
+        elif platform == "darwin":
+            self.OPEN_OCD = '/usr/local/bin/openocd'
+        self.OPEN_OCD_COMMAND = '%s  -f interface/cmsis-dap.cfg -f target/stm32f0x.cfg -f ' \
+                                'openocd_scripts/stm32f0-openocd.cfg -c "stm_flash %s" -c shutdown' \
+                                '2> /dev/null' % (self.OPEN_OCD, '%s')
 
     def _make_cmd(self, path):
         before = "/usr/local/bin/openocd -f interface/cmsis-dap.cfg -f target/stm32f0x.cfg -f " \
