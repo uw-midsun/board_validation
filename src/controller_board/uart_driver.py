@@ -6,9 +6,12 @@ from serial import EIGHTBITS, PARITY_NONE
 
 
 class UartDriver(object):
-    #115200
-    #8
-    #N1
+    """
+        configurations:
+            115200
+            8
+            N1
+    """
     def __init__(self):
         self.serial = None
 
@@ -32,6 +35,7 @@ class UartDriver(object):
 
     def close(self):
         self.serial.close()
+        self.serial = None
 
 
 log = logging.getLogger("{}.{}".format(UartDriver.__module__, UartDriver.__name__))

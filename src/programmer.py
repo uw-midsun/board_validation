@@ -1,6 +1,12 @@
+import glob
 import logging
 import os
+import subprocess
+from subprocess import CalledProcessError
 from sys import platform
+
+from exceptions import BinaryDoesntExist, ProgrammerNotConnected
+from util.file_utilities import ensure_path_exists
 
 
 class Programmer(object):
@@ -15,6 +21,9 @@ class Programmer(object):
                                 'openocd_scripts/stm32f0-openocd.cfg -c "stm_flash %s" -c shutdown' \
                                 '2> /dev/null' % (self.OPEN_OCD, '%s')
 
+    def _get_img_path(self, image):
+        return "{}/{}".format(self.IMAGES_DIR, image)
+
     def _make_cmd(self, path):
         before = "/usr/local/bin/openocd -f interface/cmsis-dap.cfg -f target/stm32f0x.cfg -f " \
                "openocd_scripts/stm32f0-openocd.cfg -c"
@@ -22,11 +31,48 @@ class Programmer(object):
         after = "-c shutdown 2> /dev/null"
         return before.split() + [command] + after.split()
 
+    def run_openocd(self, img_path):
+        try:
+            command = [
+                self.OPEN_OCD,
+                "-f", "interface/cmsis-dap.cfg",
+                "-f", "target/stm32f0x.cfg",
+                "-f", "openocd_scripts/stm32f0-openocd.cfg",
+                "-c", "stm_flash {}".format(img_path), "-c", "shutdown"
+            ]
+            log.debug(" ".join(command))
+            subprocess.run(command, check=True)
+        except CalledProcessError as e:
+            raise ProgrammerNotConnected from e
+
+    def _get_dev(self):
+        return glob.glob("/dev/*CMSIS*")
+
+    def ensure_device_passed_in(self):
+        dev = self._get_dev()
+        while not dev:
+            dev = self._get_dev()
+            log.error("Could not find the USB Probe, "
+                      "try disconnecting and reconnecting again."
+                      " Then hit 'Enter'.")
+            input()
+
     def program(self, image_name):
+        img_path = self._get_img_path(image_name)
+        if not ensure_path_exists(img_path):
+            raise BinaryDoesntExist()
         image_path = '{}/{}'.format(Programmer.IMAGES_DIR, image_name)
         log.info("Beginning programming: %s onto the board" % image_path)
-        command_string = self.OPEN_OCD_COMMAND % image_path + " 2>&1 > /dev/null"
-        os.system(command_string)
+        programming_done = False
+        while not programming_done:
+            self.ensure_device_passed_in()
+            try:
+                self.run_openocd(img_path)
+                programming_done = True
+            except ProgrammerNotConnected:
+                log.error("Error finding the device, please check your "
+                          "connections and try again! Hit enter when done.")
+                input()
         log.info("Programming done!")
 
 
