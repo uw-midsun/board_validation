@@ -42,7 +42,7 @@ class TutorialBoardAdc(Scenario):
         self.setup()
         log.info("Press the ENTER key to stop:\n")
         while self.keyboard_queue.empty():
-            print('\r%s' % driver.read().decode('ascii').replace('\n', ''), end="\r")
+            print('%s' % driver.read().decode('ascii').replace('\n', ''))
         self.thread_running = False
         self.input_thread.join()
 
