@@ -1,3 +1,4 @@
+import glob
 import logging
 import os
 import subprocess
@@ -23,7 +24,6 @@ class Programmer(object):
     def _get_img_path(self, image):
         return "{}/{}".format(self.IMAGES_DIR, image)
 
-
     def _make_cmd(self, path):
         before = "/usr/local/bin/openocd -f interface/cmsis-dap.cfg -f target/stm32f0x.cfg -f " \
                "openocd_scripts/stm32f0-openocd.cfg -c"
@@ -45,6 +45,18 @@ class Programmer(object):
         except CalledProcessError as e:
             raise ProgrammerNotConnected from e
 
+    def _get_dev(self):
+        return glob.glob("/dev/*CMSIS*")
+
+    def ensure_device_passed_in(self):
+        dev = self._get_dev()
+        while not dev:
+            dev = self._get_dev()
+            log.error("Could not find the USB Probe, "
+                      "try disconnecting and reconnecting again."
+                      " Then hit 'Enter'.")
+            input()
+
     def program(self, image_name):
         img_path = self._get_img_path(image_name)
         if not ensure_path_exists(img_path):
@@ -53,6 +65,7 @@ class Programmer(object):
         log.info("Beginning programming: %s onto the board" % image_path)
         programming_done = False
         while not programming_done:
+            self.ensure_device_passed_in()
             try:
                 self.run_openocd(img_path)
                 programming_done = True

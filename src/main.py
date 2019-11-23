@@ -7,9 +7,9 @@ from scenarios.tutorial_board_button_interrupt import TutorialBoardButtonInterru
 
 def main():
     scenarios = [
-        BlinkingLed(),
-        TutorialBoardAdc(),
-        TutorialBoardButtonInterrupt()
+        BlinkingLed,
+        TutorialBoardAdc,
+        TutorialBoardButtonInterrupt
     ]
     while True:
         log.info("Available scenarios: please input the number of the scenario that you would like to run. Type "
@@ -19,11 +19,19 @@ def main():
         choice = input()
         if choice == 'exit':
             break
-        d = int(choice)
-        scenarios[d].run()
+        try:
+            d = int(choice)
+            if d >= len(scenarios):
+                log.error("Invalid input, please try again")
+                continue
+        except Exception:
+            log.error("Invalid input, please try again")
+            continue
+        scenario = scenarios[d]()
+        scenario.run()
 
 
 if __name__ == '__main__':
-    MsLoggerConfigurator().configure_logging()
+    MsLoggerConfigurator().configure_logging(log_level=logging.INFO)
     log = logging.getLogger()
     main()
